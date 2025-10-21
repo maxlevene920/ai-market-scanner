@@ -18,7 +18,7 @@ asyncio-throttle>=1.0.2
 python-dotenv>=1.0.0
 
 # Database (optional)
-sqlite3
+# sqlite3 is part of Python standard library - no need to install
 sqlalchemy>=2.0.0
 
 # Utilities
@@ -26,6 +26,7 @@ schedule>=1.2.0
 click>=8.1.0
 rich>=13.7.0
 loguru>=0.7.0
+python-dateutil>=2.8.0
 
 # Development
 pytest>=7.4.0
