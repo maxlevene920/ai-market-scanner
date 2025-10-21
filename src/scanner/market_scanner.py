@@ -14,6 +14,7 @@ from .base_scanner import MarketMention
 from .news_scanner import NewsScanner
 from .reddit_scanner import RedditScanner
 from .rss_scanner import RSSScanner
+from .fantasy_football_scanner import FantasyFootballScanner
 from ..config import settings
 
 
@@ -39,6 +40,12 @@ class MarketScanner:
         
         # Initialize Reddit scanner (no API key required)
         self.scanners.append(RedditScanner())
+        
+        # Initialize Fantasy Football scanner if enabled
+        if settings.scanner.fantasy_football_enabled:
+            self.scanners.append(FantasyFootballScanner())
+        else:
+            logger.info("Fantasy Football scanner disabled")
         
         # Initialize News API scanner if API key is available
         if settings.api.news_api_key:

@@ -54,20 +54,21 @@ class FileManager:
         
         self.logger.info(f"Created directory structure in {self.base_dir}")
     
-    def save_mentions(self, mentions: List[MarketMention], filename: Optional[str] = None) -> str:
+    def save_mentions(self, mentions: List[MarketMention], filename: Optional[str] = None, prefix: str = "mentions") -> str:
         """
         Save market mentions to file
         
         Args:
             mentions: List of market mentions to save
             filename: Optional filename (auto-generated if None)
+            prefix: Prefix for auto-generated filename
             
         Returns:
             Path to saved file
         """
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"mentions_{timestamp}.json"
+            filename = f"{prefix}_{timestamp}.json"
         
         file_path = self.base_dir / "mentions" / filename
         
@@ -320,20 +321,21 @@ class FileManager:
             self.logger.error(f"Error getting file info: {e}")
             return None
     
-    def export_to_csv(self, mentions: List[MarketMention], filename: Optional[str] = None) -> str:
+    def export_to_csv(self, mentions: List[MarketMention], filename: Optional[str] = None, prefix: str = "mentions") -> str:
         """
         Export mentions to CSV file
         
         Args:
             mentions: List of market mentions to export
             filename: Optional filename (auto-generated if None)
+            prefix: Prefix for auto-generated filename
             
         Returns:
             Path to exported CSV file
         """
         if filename is None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"mentions_{timestamp}.csv"
+            filename = f"{prefix}_{timestamp}.csv"
         
         file_path = self.base_dir / "exports" / filename
         
