@@ -57,7 +57,11 @@ class ScannerConfig:
     # Keywords and filters
     keywords: List[str] = None
     exclude_keywords: List[str] = None
-    min_mention_threshold: int芙 5
+    min_mention_threshold: int = 5
+    
+    # Fantasy football specific settings
+    fantasy_football_enabled: bool = True
+    fantasy_football_keywords: List[str] = None
     
     def __post_init__(self):
         """Set default keywords if none provided"""
@@ -70,6 +74,16 @@ class ScannerConfig:
         if self.exclude_keywords is None:
             self.exclude_keywords = [
                 "spam", "scam", "fake", "clickbait"
+            ]
+        
+        if self.fantasy_football_keywords is None:
+            self.fantasy_football_keywords = [
+                "fantasy football", "fantasy", "draft", "waiver wire", "start/sit",
+                "sleepers", "busts", "injury report", "player news", "trade value",
+                "projections", "rankings", "matchup", "DFS", "daily fantasy",
+                "lineup", "roster", "free agent", "trade", "pickup", "NFL",
+                "quarterback", "running back", "wide receiver", "tight end",
+                "kicker", "defense", "fantasy points", "PPR", "standard"
             ]
 
 
@@ -131,6 +145,11 @@ class Settings:
                 name="Crypto News",
                 url="https://cointelegraph.com/rss",
                 rate_limit=1.0
+            ),
+            MarketSource(
+                name="Fantasy Football",
+                url="https://feeds.feedburner.com/espn/fantasy/football",
+                rate_limit=1.5
             )
         ]
     

@@ -46,12 +46,16 @@ def cli(log_level: str, log_file: Optional[str]):
 @click.option('--max-results', '-m', default=200, help='Maximum number of results')
 @click.option('--save', '-s', is_flag=True, help='Save results to file')
 @click.option('--output-format', '-f', type=click.Choice(['json', 'csv']), default='json', help='Output format')
-def scan(keywords: List[str], max_results: int, save: bool, output_format: str):
+@click.option('--fantasy-football', '-ff', is_flag=True, help='Include fantasy football data sources')
+def scan(keywords: List[str], max_results: int, save: bool, output_format: str, fantasy_football: bool):
     """Scan markets for mentions and save results"""
     
     # Use default keywords if none provided
     if not keywords:
-        keywords = list(settings.scanner.keywords)
+        if fantasy_football:
+            keywords = list(settings.scanner.fantasy_football_keywords)
+        else:
+            keywords = list(settings.scanner.keywords)
     
     console.print(f"[bold blue]Scanning markets for keywords: {', '.join(keywords)}[/bold blue]")
     
@@ -131,6 +135,98 @@ def scan(keywords: List[str], max_results: int, save: bool, output_format: str):
             console.print(f"[red]Error: {e}[/red]")
     
     asyncio.run(run_scan())
+
+
+@cli.command()
+@click.option('--keywords', '-k', multiple=True, help='Fantasy football keywords to search for')
+@click.option('--max-results', '-m', default=100, help='Maximum number of results')
+@click.option('--save', '-s', is_flag=True, help='Save results to file')
+@click.option('--output-format', '-f', type=click.Choice(['json', 'csv']), default='json', help='Output format')
+def fantasy_football(keywords: List[str], max_results: int, save: bool, output_format: str):
+    """Scan fantasy football sources for mentions and analysis"""
+    
+    # Use fantasy football keywords if none provided
+    if not keywords:
+        keywords = list(settings.scanner.fantasy_football_keywords)
+    
+    console.print(f"[bold blue]Scanning fantasy football sources for keywords: {', '.join(keywords)}[/bold blue]")
+    
+    async def run_fantasy_scan():
+        try:
+            # Initialize scanner with fantasy football focus
+            scanner = MarketScanner()
+            
+            # Test scanners first
+            console.print("[yellow]Testing fantasy football scanners...[/yellow]")
+            test_results = await scanner.test_scanners()
+            
+            # Show test results
+            table = Table(title="Fantasy Football Scanner Test Results")
+            table.add_column("Scanner", style="cyan")
+            table.add_column("Status", style="green")
+            
+            for scanner_name, status in test_results.items():
+                status_text = "✓ Working" if status else "✗ Failed"
+                table.add_row(scanner_name, status_text)
+            
+            console.print(table)
+            
+            # Confirm if any scanners failed
+            failed_scanners = [name for name, status in test_results.items() if not status]
+            if failed_scanners:
+                if not Confirm.ask(f"Some scanners failed: {', '.join(failed_scanners)}. Continue anyway?"):
+                    console.print("[red]Scan cancelled by user[/red]")
+                    return
+            
+            # Start scanning
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                console=console
+            ) as progress:
+                task = progress.add_task("Scanning fantasy football sources...", total=None)
+                
+                mentions = await scanner.scan_markets(keywords, max_results)
+                
+                progress.update(task, description="Fantasy football scan completed!")
+            
+            # Display results
+            console.print(f"\n[green]Found {len(mentions)} fantasy football mentions[/green]")
+            
+            if mentions:
+                # Show top mentions
+                table = Table(title="Top Fantasy Football Mentions")
+                table.add_column("Source", style="cyan")
+                table.add_column("Title", style="white")
+                table.add_column("Relevance", style="green")
+                table.add_column("Published", style="yellow")
+                
+                for mention in mentions[:10]:
+                    table.add_row(
+                        mention.source,
+                        mention.title[:50] + "..." if len(mention.title) > 50 else mention.title,
+                        f"{mention.relevance_score:.2f}" if mention.relevance_score else "N/A",
+                        mention.published_at.strftime("%Y-%m-%d %H:%M")
+                    )
+                
+                console.print(table)
+            
+            # Save results if requested
+            if save and mentions:
+                file_manager = FileManager()
+                
+                if output_format == 'json':
+                    file_path = file_manager.save_mentions(mentions, prefix="fantasy_football")
+                    console.print(f"[green]Fantasy football results saved to: {file_path}[/green]")
+                elif output_format == 'csv':
+                    file_path = file_manager.export_to_csv(mentions, prefix="fantasy_football")
+                    console.print(f"[green]Fantasy football results exported to: {file_path}[/green]")
+            
+        except Exception as e:
+            logger.error(f"Error during fantasy football scan: {e}")
+            console.print(f"[red]Error: {e}[/red]")
+    
+    asyncio.run(run_fantasy_scan())
 
 
 @cli.command()
